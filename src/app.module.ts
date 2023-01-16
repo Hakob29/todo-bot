@@ -11,7 +11,7 @@ import { TodobotModule } from './todobot/todobot.module';
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot(OrmConfig.options),
     TelegrafModule.forRoot({
-      token: process.env.TELEGRAM_BOT_KEY
+      token: process.env.TELEGRAM_BOT_KEY,
     }),
     TodobotModule
   ],
