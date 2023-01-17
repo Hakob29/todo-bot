@@ -25,7 +25,7 @@ export class TodobotService {
         let text = ctx.message["text"];
         const chatId = String(ctx.message.chat.id);
         const name = ctx.message.chat["username"];
-        let user = await this.repo.findOne({ where: { name: name } });
+        let user = await this.repo.findOne({ where: { chatId: chatId } });
         if (!user) {
             user = this.repo.create({
                 chatId: chatId,

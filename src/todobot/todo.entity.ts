@@ -9,7 +9,7 @@ export class Todo {
     @Column({ nullable: false })
     chatId: string
 
-    @Column({ nullable: false })
+    @Column({ default: "New User" })
     name: string;
 
     @Column({ default: 0 })
