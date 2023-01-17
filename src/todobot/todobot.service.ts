@@ -9,6 +9,7 @@ import { Todo } from "./todo.entity";
 @Injectable()
 export class TodobotService {
     constructor(
+        @InjectRepository(Todo) private readonly repo: Repository<Todo>,
         @InjectBot() private readonly bot: Telegraf<Context>
     ) {
         this.bot.telegram.setMyCommands([
@@ -23,13 +24,22 @@ export class TodobotService {
     async message(ctx: Context) {
         let text = ctx.message["text"];
         const chatId = String(ctx.message.chat.id);
+        const name = ctx.message.chat["username"];
+        let user = await this.repo.findOne({ where: { name: name } });
+        if (!user) {
+            user = this.repo.create({
+                chatId: chatId,
+                name: name
+            })
+        }
+        await this.repo.save(user);
         if (text === "/start") {
             await ctx.sendSticker("https://tlgrm.ru/_/stickers/ea5/382/ea53826d-c192-376a-b766-e5abc535f1c9/7.webp")
             await this.bot.telegram.sendMessage(chatId, "Hi!");
         }
         else if (text === "/info") {
             await ctx.sendSticker("https://tlgrm.ru/_/stickers/ea5/382/ea53826d-c192-376a-b766-e5abc535f1c9/8.webp")
-            await ctx.reply("Your name is " + ctx.message.chat["username"]);
+            await ctx.reply("Your name is " + name + "\n" + "Right answer " + user.right + "\n" + "Wrong answer " + user.wrong);
         }
         else if (text === "/game") {
             await ctx.sendSticker("https://tlgrm.ru/_/stickers/ea5/382/ea53826d-c192-376a-b766-e5abc535f1c9/9.webp")
@@ -46,7 +56,8 @@ export class TodobotService {
             });
         }
         else {
-            await ctx.reply("I don't understand you!")
+            await ctx.sendSticker("https://tlgrm.ru/_/stickers/ea5/382/ea53826d-c192-376a-b766-e5abc535f1c9/10.webp");
+            await ctx.reply("I don't understand you!");
         }
     }
 
@@ -55,16 +66,18 @@ export class TodobotService {
         const chatId = await ctx.update["callback_query"].message.chat.id
         const data = await ctx.update["callback_query"].data;
         const number = Math.ceil((Math.random() * 9));
-
+        const user = await this.repo.findOne({ where: { chatId: chatId } });
+        if (!user) throw new Error("User not found...");
         if (number == data) {
-            await ctx.sendSticker("https://tlgrm.ru/_/stickers/ea5/382/ea53826d-c192-376a-b766-e5abc535f1c9/11.webp")
+            await ctx.sendSticker("https://tlgrm.ru/_/stickers/ea5/382/ea53826d-c192-376a-b766-e5abc535f1c9/11.webp");
             await this.bot.telegram.sendMessage(chatId, "You wiiiiiiin!!!!!!!", {
                 reply_markup: {
                     inline_keyboard: [
                         [{ text: "Try Again", callback_data: "/game" }]
                     ]
                 }
-            })
+            });
+            user.right += 1;
         }
         else if (number != data && data != "/game") {
             await ctx.sendSticker("https://tlgrm.ru/_/stickers/ea5/382/ea53826d-c192-376a-b766-e5abc535f1c9/6.webp")
@@ -75,6 +88,7 @@ export class TodobotService {
                     ]
                 }
             })
+            user.wrong += 1;
         }
 
         if (data == "/game") {
@@ -90,6 +104,7 @@ export class TodobotService {
                 }
             });
         }
+        await this.repo.save(user);
 
     }
 

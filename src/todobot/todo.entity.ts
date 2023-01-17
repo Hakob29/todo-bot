@@ -7,8 +7,14 @@ export class Todo {
     id: number;
 
     @Column({ nullable: false })
+    chatId: string
+
+    @Column({ nullable: false })
     name: string;
 
-    @Column({ default: false })
-    isCompleted: Boolean;
+    @Column({ default: 0 })
+    right: number;
+
+    @Column({ default: 0 })
+    wrong: number;
 }
